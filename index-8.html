@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#087443">
+<title>HomeFix Electrical — Technician & Customer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,"Noto Sans Bengali",sans-serif;background:#f5f7f6;color:#14231d}
+.app{max-width:560px;margin:auto;min-height:100vh;background:#fff;padding-bottom:82px}
+header{background:#087443;color:#fff;padding:24px 20px 22px;border-radius:0 0 26px 26px;position:sticky;top:0;z-index:5}
+.logo{font-size:27px;font-weight:800}.sub{opacity:.9;margin-top:4px}
+main{padding:16px}.screen{display:none}.screen.active{display:block}
+.card{background:#fff;border:1px solid #dfe8e3;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 3px 14px #0b5a2a10}
+.hero{background:linear-gradient(135deg,#087443,#12a961);color:white;border-radius:22px;padding:22px;margin-bottom:18px}
+.hero h1{font-size:28px;margin:0 0 10px}.hero p{margin:0;line-height:1.5}
+h2{margin:12px 0;font-size:22px}h3{margin:4px 0 10px}
+label{display:block;font-weight:700;font-size:14px;margin:12px 0 6px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #ccd9d2;border-radius:11px;font-size:15px;background:#fff}
+textarea{min-height:80px;resize:vertical}
+button{border:0;border-radius:12px;padding:12px 15px;font-size:15px;font-weight:700;cursor:pointer}
+.primary{background:#0aaa5b;color:white}.secondary{background:#eaf7f0;color:#087443}.dark{background:#14231d;color:#fff}.danger{background:#fff0f0;color:#b42318}
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.service{padding:14px;border:1px solid #dce7e1;border-radius:15px;background:#fff}
+.service .price{color:#087443;font-weight:800;margin-top:7px}
+.small{font-size:13px;color:#66736d}.muted{color:#6a756f}
+.stat{padding:14px;border-radius:15px;background:#eef8f2;text-align:center}.stat b{display:block;font-size:22px;color:#087443}
+.tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(560px,100%);background:#fff;border-top:1px solid #dce6e1;display:grid;grid-template-columns:repeat(4,1fr);z-index:10}
+.tabs button{background:#fff;border-radius:0;padding:10px 4px;color:#5f6b65}.tabs button.active{color:#087443;background:#eef8f2}
+.badge{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;font-weight:700;background:#eef8f2;color:#087443}
+.invoice{background:#fff;border:1px solid #dce7e1;border-radius:18px;padding:18px}
+.invoice-head{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #ddd;padding-bottom:12px}
+.line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed #ddd}
+.total{font-size:20px;font-weight:800;color:#087443}
+.hidden{display:none!important}
+@media(max-width:380px){.grid{grid-template-columns:1fr}.hero h1{font-size:24px}}
+@media print{
+  body{background:#fff}.app{max-width:none;padding:0}.app>header,.tabs,main>.screen:not(#invoiceScreen){display:none!important}
+  #invoiceScreen{display:block!important;padding:0}.no-print{display:none!important}.invoice{border:0;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">⚡ HomeFix Electrical</div>
+  <div class="sub">Safe Power • Better Living</div>
+</header>
+
+<main>
+<section id="home" class="screen active">
+  <div class="hero">
+    <h1>Customer & Technician Service</h1>
+    <p>Service booking, job tracking, bill তৈরি এবং PDF invoice — সব এক জায়গায়।</p>
+  </div>
+  <div class="grid">
+    <div class="stat"><b id="statBookings">0</b><span class="small">Bookings</span></div>
+    <div class="stat"><b id="statDue">৳0</b><span class="small">Total Due</span></div>
+  </div>
+  <div class="card">
+    <h3>Customer Service</h3>
+    <p class="small">Customer-এর তথ্য নিয়ে কাজের booking তৈরি করুন।</p>
+    <button class="primary" onclick="go('booking')">➕ New Booking</button>
+  </div>
+  <div class="card">
+    <h3>Technician Desk</h3>
+    <p class="small">Booking status, technician, materials এবং final bill manage করুন।</p>
+    <button class="dark" onclick="go('jobs')">🔧 Open Jobs</button>
+  </div>
+</section>
+
+<section id="booking" class="screen">
+  <h2>New Customer Booking</h2>
+  <div class="card">
+    <label>Customer Name</label><input id="cname" placeholder="গ্রাহকের নাম">
+    <label>Phone Number</label><input id="cphone" placeholder="01XXXXXXXXX" inputmode="tel">
+    <label>Address</label><textarea id="caddress" placeholder="গ্রাহকের ঠিকানা"></textarea>
+    <label>Category</label><select id="cat" onchange="loadSubs()"></select>
+    <label>Sub Category</label><select id="sub" onchange="loadService()"></select>
+    <label>Service</label><select id="svc" onchange="showServicePrice()"></select>
+    <div id="serviceInfo" class="card hidden"></div>
+    <label>Quantity</label>
+    <div class="row"><button class="secondary" onclick="qty(-1)">−</button><input id="qty" value="1" readonly style="text-align:center"><button class="secondary" onclick="qty(1)">+</button></div>
+    <label>Preferred Date</label><input id="bdate" type="date">
+    <label>Preferred Time</label><input id="btime" type="time">
+    <label>Customer Note</label><textarea id="cnote" placeholder="কাজের অতিরিক্ত তথ্য"></textarea>
+    <button class="primary" style="width:100%;margin-top:12px" onclick="createBooking()">Create Booking</button>
+  </div>
+</section>
+
+<section id="jobs" class="screen">
+  <h2>Technician Jobs</h2>
+  <div class="card">
+    <label>Search</label><input id="jobSearch" oninput="renderJobs()" placeholder="Booking ID / customer / phone">
+  </div>
+  <div id="jobsList"></div>
+</section>
+
+<section id="jobDetail" class="screen">
+  <div class="row"><button class="secondary" onclick="go('jobs')">← Jobs</button><span id="jobBadge" class="badge">New</span></div>
+  <div id="jobDetailBox"></div>
+</section>
+
+<section id="invoiceScreen" class="screen">
+  <div class="row no-print"><button class="secondary" onclick="go('jobs')">← Jobs</button><button class="primary" onclick="printInvoice()">🧾 Save / Print PDF</button></div>
+  <div id="invoiceBox" style="margin-top:12px"></div>
+</section>
+</main>
+
+<nav class="tabs">
+  <button id="tab-home" class="active" onclick="go('home')">⌂<br>Home</button>
+  <button id="tab-booking" onclick="go('booking')">＋<br>Booking</button>
+  <button id="tab-jobs" onclick="go('jobs')">▣<br>Jobs</button>
+  <button id="tab-invoice" onclick="go('invoiceScreen')">🧾<br>Invoice</button>
+</nav>
+</div>
+
+<script>
+const SERVICES = [{"sl": 1, "category": "House Wiring", "sub": "General Wiring", "service": "নতুন বাড়ির সম্পূর্ণ হাউস ওয়্যারিং", "price": "৳14,400 – 24,000"}, {"sl": 2, "category": "House Wiring", "sub": "General Wiring", "service": "নতুন ফ্ল্যাট/বাড়ির রুম ওয়্যারিং", "price": "৳3,200 – 6,400"}, {"sl": 3, "category": "House Wiring", "sub": "Wiring Type", "service": "Concealed Wiring", "price": "৳96 – 128 /sqft"}, {"sl": 4, "category": "House Wiring", "sub": "Wiring Type", "service": "Surface Wiring", "price": "৳72 – 96 /sqft"}, {"sl": 5, "category": "House Wiring", "sub": "Lighting Wiring", "service": "Light point wiring", "price": "৳480 – 800"}, {"sl": 6, "category": "House Wiring", "sub": "Fan Wiring", "service": "Fan point wiring", "price": "৳640 – 960"}, {"sl": 7, "category": "House Wiring", "sub": "Socket Wiring", "service": "Socket point wiring", "price": "৳560 – 800"}, {"sl": 8, "category": "House Wiring", "sub": "Switch Wiring", "service": "Switch point wiring", "price": "৳400 – 640"}, {"sl": 9, "category": "House Wiring", "sub": "Switch Wiring", "service": "2-way switch wiring", "price": "৳960 – 1,440"}, {"sl": 10, "category": "House Wiring", "sub": "Bell Wiring", "service": "Bell point wiring", "price": "৳480 – 720"}, {"sl": 11, "category": "House Wiring", "sub": "TV & Data Wiring", "service": "TV point wiring", "price": "৳640 – 960"}, {"sl": 12, "category": "House Wiring", "sub": "TV & Data Wiring", "service": "Internet/LAN point wiring", "price": "৳640 – 960"}, {"sl": 13, "category": "House Wiring", "sub": "TV & Data Wiring", "service": "Telephone point wiring", "price": "৳480 – 800"}, {"sl": 14, "category": "House Wiring", "sub": "Security Wiring", "service": "CCTV power point wiring", "price": "৳500 – 900"}, {"sl": 15, "category": "House Wiring", "sub": "Dedicated Power Point", "service": "AC point wiring", "price": "৳1,200 – 2,000"}, {"sl": 16, "category": "House Wiring", "sub": "Dedicated Power Point", "service": "Geyser/Water Heater point", "price": "৳960 – 1,600"}, {"sl": 17, "category": "House Wiring", "sub": "Dedicated Power Point", "service": "Washing Machine point", "price": "৳800 – 1,200"}, {"sl": 18, "category": "House Wiring", "sub": "Dedicated Power Point", "service": "Refrigerator dedicated point", "price": "৳800 – 1,200"}, {"sl": 19, "category": "House Wiring", "sub": "Dedicated Power Point", "service": "Microwave/Oven point", "price": "৳640 – 960"}, {"sl": 20, "category": "House Wiring", "sub": "Dedicated Power Point", "service": "Induction Cooker point", "price": "৳640 – 1,000"}, {"sl": 21, "category": "House Wiring", "sub": "Dedicated Power Point", "service": "Kitchen dedicated socket point", "price": "৳700 – 1,200"}, {"sl": 22, "category": "House Wiring", "sub": "Dedicated Power Point", "service": "Bathroom electrical point", "price": "৳700 – 1,200"}, {"sl": 23, "category": "House Wiring", "sub": "Outdoor Wiring", "service": "Balcony/Outdoor light wiring", "price": "৳500 – 900"}, {"sl": 24, "category": "House Wiring", "sub": "Outdoor Wiring", "service": "Staircase light wiring", "price": "৳700 – 1,200"}, {"sl": 25, "category": "House Wiring", "sub": "Outdoor Wiring", "service": "Two-way staircase wiring", "price": "৳960 – 1,440"}, {"sl": 26, "category": "House Wiring", "sub": "Backup & Generator", "service": "IPS/Inverter wiring", "price": "৳1,200 – 2,000"}, {"sl": 27, "category": "House Wiring", "sub": "Backup & Generator", "service": "Generator changeover wiring", "price": "৳1,600 – 2,800"}, {"sl": 28, "category": "House Wiring", "sub": "Main Supply", "service": "Main incoming cable installation", "price": "৳1,200 – 2,400"}, {"sl": 29, "category": "House Wiring", "sub": "Main Supply", "service": "Sub-main cable installation", "price": "৳1,000 – 2,000"}, {"sl": 30, "category": "House Wiring", "sub": "Re-Wiring", "service": "Old house re-wiring", "price": "৳5,000 – 15,000"}, {"sl": 31, "category": "House Wiring", "sub": "Re-Wiring", "service": "Room point layout & wiring", "price": "৳1,500 – 3,000"}, {"sl": 32, "category": "DB & Protection", "sub": "DB Installation", "service": "DB board installation (4–8 way)", "price": "৳2,400 – 4,800"}, {"sl": 33, "category": "DB & Protection", "sub": "DB Installation", "service": "DB board installation (12–18 way)", "price": "৳4,000 – 7,000"}, {"sl": 34, "category": "DB & Protection", "sub": "MCB", "service": "MCB installation & wiring", "price": "৳400 – 800 /point"}, {"sl": 35, "category": "DB & Protection", "sub": "MCB", "service": "MCB change/upgrade", "price": "৳480 – 960"}, {"sl": 36, "category": "DB & Protection", "sub": "RCCB/RCBO", "service": "RCCB/RCBO installation", "price": "৳1,200 – 2,400"}, {"sl": 37, "category": "DB & Protection", "sub": "Main Protection", "service": "Main switch installation", "price": "৳640 – 1,200"}, {"sl": 38, "category": "DB & Protection", "sub": "Main Protection", "service": "Isolator installation", "price": "৳600 – 1,200"}, {"sl": 39, "category": "DB & Protection", "sub": "Circuit Management", "service": "Distribution circuit separation", "price": "৳800 – 1,600"}, {"sl": 40, "category": "DB & Protection", "sub": "Earthing", "service": "Earthing connection", "price": "৳1,200 – 2,400"}, {"sl": 41, "category": "DB & Protection", "sub": "Earthing", "service": "Earth pit installation (basic)", "price": "৳2,400 – 4,800"}, {"sl": 42, "category": "DB & Protection", "sub": "Protection Accessories", "service": "Fuse replacement", "price": "৳300 – 600"}, {"sl": 43, "category": "DB & Protection", "sub": "Protection Accessories", "service": "Surge protection device installation", "price": "৳1,200 – 2,500"}, {"sl": 44, "category": "DB & Protection", "sub": "DB Maintenance", "service": "DB labeling & circuit identification", "price": "৳500 – 1,000"}, {"sl": 45, "category": "DB & Protection", "sub": "DB Maintenance", "service": "DB cleaning & tightening", "price": "৳500 – 1,000"}, {"sl": 46, "category": "DB & Protection", "sub": "DB Components", "service": "Neutral bar installation", "price": "৳500 – 1,000"}, {"sl": 47, "category": "DB & Protection", "sub": "DB Components", "service": "Earth bar installation", "price": "৳500 – 1,000"}, {"sl": 48, "category": "Electrical Points", "sub": "Switch & Socket", "service": "Additional electrical point", "price": "৳640 – 960"}, {"sl": 49, "category": "Electrical Points", "sub": "Switch & Socket", "service": "Point shifting", "price": "৳800 – 1,600"}, {"sl": 50, "category": "Electrical Points", "sub": "Switch & Socket", "service": "Switch replacement", "price": "৳320 – 640"}, {"sl": 51, "category": "Electrical Points", "sub": "Switch & Socket", "service": "Socket replacement", "price": "৳320 – 640"}, {"sl": 52, "category": "Electrical Points", "sub": "Switch & Socket", "service": "Universal socket installation", "price": "৳400 – 800"}, {"sl": 53, "category": "Electrical Points", "sub": "Conduit & Box", "service": "Junction box installation", "price": "৳480 – 800"}, {"sl": 54, "category": "Electrical Points", "sub": "Conduit & Box", "service": "Conduit/PVC pipe installation", "price": "৳48 – 80 /ft"}, {"sl": 55, "category": "Electrical Points", "sub": "Conduit & Box", "service": "Flexible conduit installation", "price": "৳50 – 90 /ft"}, {"sl": 56, "category": "Electrical Points", "sub": "Fan", "service": "Fan regulator replacement", "price": "৳400 – 800"}, {"sl": 57, "category": "Electrical Points", "sub": "Fan", "service": "Ceiling fan installation", "price": "৳640 – 1,200"}, {"sl": 58, "category": "Electrical Points", "sub": "Fan", "service": "Wall fan installation", "price": "৳500 – 900"}, {"sl": 59, "category": "Electrical Points", "sub": "Lighting", "service": "Dimmer switch installation", "price": "৳480 – 960"}, {"sl": 60, "category": "Electrical Points", "sub": "Lighting", "service": "Light fitting installation", "price": "৳240 – 560"}, {"sl": 61, "category": "Electrical Points", "sub": "Lighting", "service": "LED panel light installation", "price": "৳300 – 700"}, {"sl": 62, "category": "Electrical Points", "sub": "Lighting", "service": "Tube light installation", "price": "৳300 – 600"}, {"sl": 63, "category": "Electrical Points", "sub": "Ventilation", "service": "Exhaust fan installation", "price": "৳500 – 900"}, {"sl": 64, "category": "Electrical Points", "sub": "Bell & Sensor", "service": "Door bell installation", "price": "৳400 – 800"}, {"sl": 65, "category": "Electrical Points", "sub": "Bell & Sensor", "service": "Night lamp point installation", "price": "৳400 – 700"}, {"sl": 66, "category": "Electrical Points", "sub": "Bell & Sensor", "service": "Motion sensor light installation", "price": "৳600 – 1,200"}, {"sl": 67, "category": "Electrical Points", "sub": "Outdoor", "service": "Outdoor light installation", "price": "৳400 – 800"}, {"sl": 68, "category": "Electrical Points", "sub": "Emergency", "service": "Emergency light installation", "price": "৳400 – 800"}, {"sl": 69, "category": "Fault Repair", "sub": "Short Circuit", "service": "Short-circuit fault finding", "price": "৳640 – 1,200"}, {"sl": 70, "category": "Fault Repair", "sub": "Connection Fault", "service": "Loose connection checking", "price": "৳400 – 800"}, {"sl": 71, "category": "Fault Repair", "sub": "Testing", "service": "Voltage testing", "price": "৳400 – 800"}, {"sl": 72, "category": "Fault Repair", "sub": "Testing", "service": "Current testing", "price": "৳400 – 800"}, {"sl": 73, "category": "Fault Repair", "sub": "Wiring Fault", "service": "Existing wiring inspection", "price": "৳800 – 1,600"}, {"sl": 74, "category": "Fault Repair", "sub": "Wiring Fault", "service": "Damaged wire replacement", "price": "৳400 – 960"}, {"sl": 75, "category": "Fault Repair", "sub": "Wiring Fault", "service": "Burnt wire replacement", "price": "৳640 – 1,200"}, {"sl": 76, "category": "Fault Repair", "sub": "Switch & Socket", "service": "Switch/Socket repair", "price": "৳320 – 640"}, {"sl": 77, "category": "Fault Repair", "sub": "Accessories", "service": "Electrical accessories repair", "price": "৳240 – 640"}, {"sl": 78, "category": "Fault Repair", "sub": "Fan Fault", "service": "Fan not running diagnosis", "price": "৳400 – 800"}, {"sl": 79, "category": "Fault Repair", "sub": "Lighting Fault", "service": "Light not working diagnosis", "price": "৳300 – 600"}, {"sl": 80, "category": "Fault Repair", "sub": "Protection Fault", "service": "MCB tripping diagnosis", "price": "৳500 – 1,000"}, {"sl": 81, "category": "Fault Repair", "sub": "Protection Fault", "service": "RCCB tripping diagnosis", "price": "৳600 – 1,200"}, {"sl": 82, "category": "Fault Repair", "sub": "Leakage Fault", "service": "Power leakage diagnosis", "price": "৳600 – 1,200"}, {"sl": 83, "category": "Fault Repair", "sub": "Neutral Fault", "service": "Neutral fault diagnosis", "price": "৳500 – 1,000"}, {"sl": 84, "category": "Fault Repair", "sub": "Earthing Fault", "service": "Earthing fault diagnosis", "price": "৳500 – 1,000"}, {"sl": 85, "category": "Fault Repair", "sub": "Socket Fault", "service": "Socket sparking diagnosis", "price": "৳400 – 800"}, {"sl": 86, "category": "Fault Repair", "sub": "Overheating", "service": "Burning smell/overheating inspection", "price": "৳500 – 1,000"}, {"sl": 87, "category": "Fault Repair", "sub": "Intermittent Fault", "service": "Intermittent power fault diagnosis", "price": "৳600 – 1,200"}, {"sl": 88, "category": "Fault Repair", "sub": "Emergency Repair", "service": "Emergency electrical fault repair", "price": "৳800 – 1,600"}, {"sl": 89, "category": "Inspection & Testing", "sub": "Load & Circuit", "service": "Load distribution checking", "price": "৳640 – 1,200"}, {"sl": 90, "category": "Inspection & Testing", "sub": "Safety Inspection", "service": "Electrical safety inspection", "price": "৳800 – 1,600"}, {"sl": 91, "category": "Inspection & Testing", "sub": "Wiring Testing", "service": "Full house wiring testing", "price": "৳1,200 – 2,400"}, {"sl": 92, "category": "Inspection & Testing", "sub": "DB Testing", "service": "DB board testing", "price": "৳640 – 1,200"}, {"sl": 93, "category": "Inspection & Testing", "sub": "Earthing Testing", "service": "Earthing system testing", "price": "৳640 – 1,200"}, {"sl": 94, "category": "Inspection & Testing", "sub": "Insulation Testing", "service": "Insulation resistance/basic megger test", "price": "৳800 – 1,500"}, {"sl": 95, "category": "Inspection & Testing", "sub": "Polarity & Continuity", "service": "Polarity testing", "price": "৳500 – 900"}, {"sl": 96, "category": "Inspection & Testing", "sub": "Polarity & Continuity", "service": "Continuity testing", "price": "৳500 – 900"}, {"sl": 97, "category": "Inspection & Testing", "sub": "Socket Testing", "service": "Socket voltage testing", "price": "৳300 – 600"}, {"sl": 98, "category": "Inspection & Testing", "sub": "Circuit Identification", "service": "Circuit identification/testing", "price": "৳600 – 1,200"}, {"sl": 99, "category": "Inspection & Testing", "sub": "Commissioning", "service": "New house pre-energization check", "price": "৳1,500 – 3,000"}, {"sl": 100, "category": "Inspection & Testing", "sub": "Commissioning", "service": "Commissioning (complete setup)", "price": "৳1,600 – 3,200"}, {"sl": 101, "category": "Appliance & Basic Installation", "sub": "Fan & Light", "service": "Ceiling fan capacitor replacement labour", "price": "৳300 – 600"}, {"sl": 102, "category": "Appliance & Basic Installation", "sub": "Fan & Light", "service": "Fan regulator installation", "price": "৳400 – 800"}, {"sl": 103, "category": "Appliance & Basic Installation", "sub": "Fan & Light", "service": "Light switch/control repair", "price": "৳300 – 600"}, {"sl": 104, "category": "Appliance & Basic Installation", "sub": "Heater", "service": "Heater connection & testing", "price": "৳500 – 1,000"}, {"sl": 105, "category": "Appliance & Basic Installation", "sub": "Water Pump", "service": "Water pump electrical connection", "price": "৳800 – 1,500"}, {"sl": 106, "category": "Appliance & Basic Installation", "sub": "Water Pump", "service": "Water pump starter/MCB wiring", "price": "৳600 – 1,200"}, {"sl": 107, "category": "Appliance & Basic Installation", "sub": "Motor", "service": "Motor connection checking", "price": "৳500 – 1,000"}, {"sl": 108, "category": "Appliance & Basic Installation", "sub": "Ventilation", "service": "Exhaust fan electrical connection", "price": "৳500 – 900"}, {"sl": 109, "category": "Appliance & Basic Installation", "sub": "Washing Machine", "service": "Washing machine electrical connection", "price": "৳400 – 800"}, {"sl": 110, "category": "Appliance & Basic Installation", "sub": "Refrigerator", "service": "Refrigerator dedicated line setup", "price": "৳600 – 1,200"}, {"sl": 111, "category": "Appliance & Basic Installation", "sub": "AC", "service": "AC dedicated line setup", "price": "৳1,000 – 2,000"}, {"sl": 112, "category": "Appliance & Basic Installation", "sub": "IPS/Inverter", "service": "IPS/Inverter changeover connection", "price": "৳1,000 – 2,000"}, {"sl": 113, "category": "Emergency & Special", "sub": "Emergency Visit", "service": "Emergency visit — daytime", "price": "৳300 – 500"}, {"sl": 114, "category": "Emergency & Special", "sub": "Emergency Visit", "service": "Emergency visit — evening/night", "price": "৳800 – 1,600"}, {"sl": 115, "category": "Emergency & Special", "sub": "Urgent Service", "service": "Same-day urgent electrical service", "price": "৳500 – 1,000"}, {"sl": 116, "category": "Emergency & Special", "sub": "Renovation", "service": "Electrical work after renovation", "price": "৳1,000 – 2,500"}, {"sl": 117, "category": "Emergency & Special", "sub": "Temporary Supply", "service": "Temporary power connection setup", "price": "৳800 – 1,500"}, {"sl": 118, "category": "Emergency & Special", "sub": "Safety Correction", "service": "Electrical safety correction visit", "price": "৳800 – 1,500"}];
+let currentJobId=null;
+const money=n=>'৳'+Math.round(Number(n)||0).toLocaleString('en-US');
+function getBookings(){return JSON.parse(localStorage.getItem('homefixBookingsV2')||'[]')}
+function saveBookings(a){localStorage.setItem('homefixBookingsV2',JSON.stringify(a))}
+function go(id){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+  const tab=document.getElementById('tab-'+id); if(tab)tab.classList.add('active');
+  if(id==='jobs')renderJobs(); if(id==='home')refreshStats(); if(id==='invoiceScreen'&&currentJobId)renderInvoice(currentJobId);
+}
+function unique(a){return [...new Set(a)]}
+function init(){
+  const cats=unique(SERVICES.map(x=>x.category));
+  cat.innerHTML=cats.map(x=>`<option>${esc(x)}</option>`).join('');
+  loadSubs(); refreshStats();
+}
+function loadSubs(){
+  const subs=unique(SERVICES.filter(x=>x.category===cat.value).map(x=>x.sub));
+  sub.innerHTML=subs.map(x=>`<option>${esc(x)}</option>`).join('');
+  loadService();
+}
+function loadService(){
+  const ss=SERVICES.filter(x=>x.category===cat.value&&x.sub===sub.value);
+  svc.innerHTML=ss.map(x=>`<option value="${x.sl}">${esc(x.service)}</option>`).join('');
+  showServicePrice();
+}
+function parsePrice(p){
+  const nums=(p.match(/[\d,]+/g)||[]).map(x=>Number(x.replace(/,/g,'')));
+  return {min:nums[0]||0,max:nums[1]||nums[0]||0,unit:p.includes('/')?p.slice(p.lastIndexOf('/')):''};
+}
+function selectedService(){return SERVICES.find(x=>x.sl===Number(svc.value))}
+function showServicePrice(){
+  const s=selectedService(); if(!s)return;
+  const p=parsePrice(s.price);
+  serviceInfo.classList.remove('hidden');
+  serviceInfo.innerHTML=`<b>${esc(s.service)}</b><div class="price">${esc(s.price)}</div><div class="small">Estimated price × quantity</div>`;
+}
+function qty(d){let n=Math.max(1,Number(qtyEl().value||1)+d);qtyEl().value=n}
+function qtyEl(){return document.getElementById('qty')}
+function createBooking(){
+  if(!cname.value.trim()||!cphone.value.trim()||!caddress.value.trim()){alert('Customer name, phone এবং address দিন।');return}
+  const s=selectedService(),p=parsePrice(s.price),q=Number(qtyEl().value);
+  const now=new Date(), id='HF-'+String(now.getTime()).slice(-6);
+  const job={id,createdAt:now.toISOString(),customer:{name:cname.value.trim(),phone:cphone.value.trim(),address:caddress.value.trim(),note:cnote.value.trim()},service:{category:s.category,sub:s.sub,name:s.service,price:s.price,min:p.min*q,max:p.max*q,qty:q},date:bdate.value,time:btime.value,technician:'',status:'New',materials:[],laborMin:p.min*q,laborMax:p.max*q,discount:0,advance:0,payment:'Due',notes:''};
+  const a=getBookings();a.unshift(job);saveBookings(a);currentJobId=id;
+  alert('Booking created: '+id); go('jobs');
+}
+function renderJobs(){
+  const q=(jobSearch?.value||'').toLowerCase(); const a=getBookings().filter(j=>(j.id+' '+j.customer.name+' '+j.customer.phone).toLowerCase().includes(q));
+  jobsList.innerHTML=a.length?a.map(j=>`<div class="card" onclick="openJob('${j.id}')"><div class="row"><b>${esc(j.id)}</b><span class="badge">${esc(j.status)}</span></div><h3>${esc(j.service.name)}</h3><div>${esc(j.customer.name)} • ${esc(j.customer.phone)}</div><div class="price">${money(j.service.min)} – ${money(j.service.max)}</div><div class="small">${esc(j.date||'Date not set')} ${esc(j.time||'')}</div></div>`).join(''):`<div class="card"><p class="muted">No jobs found.</p></div>`;
+}
+function openJob(id){currentJobId=id;renderJobDetail(id);go('jobDetail')}
+function renderJobDetail(id){
+  const j=getBookings().find(x=>x.id===id);if(!j)return;
+  jobBadge.textContent=j.status;
+  const matTotal=(j.materials||[]).reduce((a,x)=>a+(Number(x.qty)||0)*(Number(x.price)||0),0);
+  const labor=(Number(j.laborFinal)||j.laborMin||0);
+  const subtotal=labor+matTotal, total=Math.max(0,subtotal-(Number(j.discount)||0)), due=Math.max(0,total-(Number(j.advance)||0));
+  jobDetailBox.innerHTML=`<div class="card">
+    <h2>${esc(j.id)}</h2><span class="badge">${esc(j.status)}</span>
+    <h3>${esc(j.service.name)}</h3><p>${esc(j.customer.name)} • ${esc(j.customer.phone)}</p><p class="small">${esc(j.customer.address)}</p>
+    <label>Status</label><select id="jstatus"><option ${j.status==='New'?'selected':''}>New</option><option ${j.status==='Assigned'?'selected':''}>Assigned</option><option ${j.status==='On the way'?'selected':''}>On the way</option><option ${j.status==='Working'?'selected':''}>Working</option><option ${j.status==='Completed'?'selected':''}>Completed</option><option ${j.status==='Cancelled'?'selected':''}>Cancelled</option></select>
+    <label>Technician Name</label><input id="tech" value="${escAttr(j.technician||'')}">
+    <label>Final Labour Charge</label><input id="labor" type="number" value="${Number(j.laborFinal||j.laborMin||0)}">
+    <label>Materials / Parts</label><div id="materials"></div><button class="secondary" onclick="addMaterial()">＋ Add Material</button>
+    <label>Discount</label><input id="discount" type="number" value="${Number(j.discount||0)}">
+    <label>Advance Paid</label><input id="advance" type="number" value="${Number(j.advance||0)}">
+    <label>Payment Status</label><select id="payment"><option ${j.payment==='Due'?'selected':''}>Due</option><option ${j.payment==='Partial'?'selected':''}>Partial</option><option ${j.payment==='Paid'?'selected':''}>Paid</option></select>
+    <label>Technician Note</label><textarea id="jnotes">${esc(j.notes||'')}</textarea>
+    <button class="primary" style="width:100%;margin-top:12px" onclick="saveJob()">Save Job</button>
+    <button class="dark" style="width:100%;margin-top:10px" onclick="makeInvoice()">🧾 Create Invoice</button>
+  </div>
+  <div class="card"><b>Current Estimate</b><div class="line"><span>Labour</span><b>${money(labor)}</b></div><div class="line"><span>Materials</span><b>${money(matTotal)}</b></div><div class="line"><span>Discount</span><b>- ${money(j.discount||0)}</b></div><div class="line"><span>Total</span><b class="total">${money(total)}</b></div><div class="line"><span>Due</span><b>${money(due)}</b></div></div>`;
+  renderMaterials(j.materials||[]);
+}
+function renderMaterials(mats){
+  materials.innerHTML=mats.map((m,i)=>`<div class="card" style="padding:10px"><div class="row"><input class="mname" data-i="${i}" value="${escAttr(m.name)}" placeholder="Material"><input class="mqty" data-i="${i}" type="number" value="${m.qty}" placeholder="Qty"><input class="mprice" data-i="${i}" type="number" value="${m.price}" placeholder="Rate"></div><button class="danger" style="margin-top:7px" onclick="removeMaterial(${i})">Remove</button></div>`).join('');
+}
+function addMaterial(){const a=getBookings();const j=a.find(x=>x.id===currentJobId);j.materials=j.materials||[];j.materials.push({name:'',qty:1,price:0});saveBookings(a);renderJobDetail(currentJobId)}
+function removeMaterial(i){const a=getBookings();const j=a.find(x=>x.id===currentJobId);j.materials.splice(i,1);saveBookings(a);renderJobDetail(currentJobId)}
+function collectMaterials(){
+  const out=[];document.querySelectorAll('.mname').forEach((el,i)=>{out.push({name:el.value,qty:Number(document.querySelector(`.mqty[data-i="${i}"]`).value)||0,price:Number(document.querySelector(`.mprice[data-i="${i}"]`).value)||0})});return out;
+}
+function saveJob(){
+  const a=getBookings(),j=a.find(x=>x.id===currentJobId);if(!j)return;
+  j.status=jstatus.value;j.technician=tech.value;j.laborFinal=Number(labor.value)||0;j.materials=collectMaterials();j.discount=Number(discount.value)||0;j.advance=Number(advance.value)||0;j.payment=payment.value;j.notes=jnotes.value;saveBookings(a);
+  alert('Job saved');renderJobDetail(currentJobId);refreshStats();
+}
+function makeInvoice(){saveJob();go('invoiceScreen')}
+function renderInvoice(id){
+  const j=getBookings().find(x=>x.id===id);if(!j)return;
+  const mats=j.materials||[], matTotal=mats.reduce((a,x)=>a+(Number(x.qty)||0)*(Number(x.price)||0),0);
+  const labor=Number(j.laborFinal||j.laborMin||0), subtotal=labor+matTotal, discount=Number(j.discount)||0,total=Math.max(0,subtotal-discount),advance=Number(j.advance)||0,due=Math.max(0,total-advance);
+  invoiceBox.innerHTML=`<div class="invoice" id="printableInvoice">
+    <div class="invoice-head"><div><h2 style="margin:0">⚡ HomeFix Electrical</h2><div class="small">Safe Power • Better Living</div></div><div style="text-align:right"><b>INVOICE</b><div>${esc(j.id)}</div><div class="small">${new Date(j.createdAt).toLocaleDateString()}</div></div></div>
+    <div style="margin:16px 0"><b>Bill To</b><div>${esc(j.customer.name)}</div><div>${esc(j.customer.phone)}</div><div>${esc(j.customer.address)}</div></div>
+    <div class="line"><span>Service</span><b>${esc(j.service.name)}</b></div>
+    <div class="line"><span>Quantity</span><b>${j.service.qty}</b></div>
+    <div class="line"><span>Labour</span><b>${money(labor)}</b></div>
+    ${mats.length?mats.map(m=>`<div class="line"><span>${esc(m.name)} × ${m.qty}</span><b>${money((Number(m.qty)||0)*(Number(m.price)||0))}</b></div>`).join(''):''}
+    <div class="line"><span>Subtotal</span><b>${money(subtotal)}</b></div>
+    <div class="line"><span>Discount</span><b>- ${money(discount)}</b></div>
+    <div class="line"><span>Grand Total</span><b class="total">${money(total)}</b></div>
+    <div class="line"><span>Advance Paid</span><b>${money(advance)}</b></div>
+    <div class="line"><span>Amount Due</span><b class="total">${money(due)}</b></div>
+    <div style="margin-top:16px"><b>Technician:</b> ${esc(j.technician||'Not assigned')}</div>
+    <div><b>Payment:</b> ${esc(j.payment)}</div>
+    <div style="margin-top:16px" class="small">${esc(j.notes||'Thank you for choosing HomeFix Electrical.')}</div>
+    </div>`;
+}
+function printInvoice(){window.print()}
+function refreshStats(){const a=getBookings();statBookings.textContent=a.length;const due=a.reduce((sum,j)=>{const m=(j.materials||[]).reduce((x,z)=>x+(Number(z.qty)||0)*(Number(z.price)||0),0);const t=Math.max(0,(Number(j.laborFinal||j.laborMin)||0)+m-(Number(j.discount)||0));return sum+Math.max(0,t-(Number(j.advance)||0))},0);statDue.textContent=money(due)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function escAttr(s){return esc(s)}
+init();
+</script>
+</body>
+</html>
